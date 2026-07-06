@@ -1,10 +1,32 @@
 import { useState, useEffect } from 'react';
+import Header from './Header';
 
-export default function QuizGame() {
+export default function App() {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      minHeight: '100vh', 
+      background: '#f7fafc' 
+    }}>
+      {/* Permanent Header Asset Banner */}
+      <Header />
+
+      {/* Main Gameplay Screen Viewport */}
+      <main style={{ flex: 1, padding: '20px' }}>
+        <QuizGame />
+      </main>
+    </div>
+  );
+}
+
+
+export function QuizGame() {
   // --- 1. STATE MANAGEMENT ---
   const [products, setProducts] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [quizComplete, setQuizComplete] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
 
   // Selections state tracking
   const [sliderIndex, setSliderIndex] = useState(1); 
@@ -31,7 +53,7 @@ export default function QuizGame() {
   ];
 
   // --- 3. DYNAMIC PROGRESS CALCULATION ---
-  const progressPercent = (currentQuestion / questions.length) * 100;
+  const progressPercent = gameStarted ? (currentQuestion / questions.length) * 100 : 0;
 
   // --- 4. DATA FETCHING ---
   useEffect(() => {
@@ -48,6 +70,10 @@ export default function QuizGame() {
   }, []);
 
   // --- 5. SELECTION HANDLERS ---
+  const handleStartGame = () => {
+    setGameStarted(true);
+  };
+
   const handleSliderNext = () => {
     const selectedSkin = questions[0].options[sliderIndex];
     setFinalSelections(prev => ({ ...prev, skinType: selectedSkin }));
@@ -94,6 +120,7 @@ export default function QuizGame() {
     setFinalSelections({ skinType: "", concerns: [], budget: "" });
     setUnlockedSteps([]); 
     setQuizComplete(false);
+    setGameStarted(false); 
   };
 
   // --- 6. LOGIC FILTER ENGINE ---
@@ -123,7 +150,6 @@ export default function QuizGame() {
 
     return {
       cleanser: findBestMatch(cleansers),
-      brand: 'skincare',
       serum: findBestMatch(serums),
       moisturizer: findBestMatch(moisturizers)
     };
@@ -165,7 +191,6 @@ export default function QuizGame() {
       e.target.style.display = 'none'; 
       const fallbackText = document.createElement('div');
       fallbackText.innerText = '✨🧴✨\n(Image Asset Loading)';
-      // FIX: Changed .styleText to .cssText to register layout rules natively
       fallbackText.style.cssText = 'margin: 20px 0; font-size: 1.1rem; color: #718096; white-space: pre-line; font-weight: bold;';
       e.target.parentNode.insertBefore(fallbackText, e.target.nextSibling);
     };
@@ -255,60 +280,88 @@ export default function QuizGame() {
     );
   }
 
-  // --- 8. RENDER SCREEN: GAMEPLAY QUESTIONS ---
+  // --- 8. RENDER SCREEN: MAIN INTERFACE ---
   return (
-    <div style={{ maxWidth: '500px', margin: '50px auto', padding: '20px', textAlign: 'center', border: '1px solid #eee', borderRadius: '12px', background: 'white' }}>
+    <div style={{ maxWidth: '500px', margin: '50px auto', padding: '30px 20px', textAlign: 'center', border: '1px solid #eee', borderRadius: '12px', background: 'white', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }}>
       
-      <div style={{ width: '100%', background: '#e2e8f0', borderRadius: '10px', height: '8px', marginBottom: '20px', overflow: 'hidden' }}>
+      {/* GLOBAL GAMEPLAY PROGRESS BAR */}
+      <div style={{ width: '100%', background: '#e2e8f0', borderRadius: '10px', height: '8px', marginBottom: '25px', overflow: 'hidden' }}>
         <div style={{ width: `${progressPercent}%`, background: '#3182ce', height: '100%', transition: 'width 0.4s ease' }} />
       </div>
 
-      <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Question {currentQuestion + 1} of {questions.length}</span>
-      <h2 style={{ margin: '10px 0 30px 0', color: '#1a202c' }}>{questions[currentQuestion].text}</h2>
-
-      {currentQuestion === 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-          <input 
-            type="range" 
-            min="0" 
-            max="2" 
-            step="1" 
-            value={sliderIndex} 
-            onChange={(e) => setSliderIndex(parseInt(e.target.value))} 
-            style={{ width: '80%', maxWidth: '300px', cursor: 'pointer' }}
-          />
-          <div style={{ fontSize: '1.2rem', color: '#4a5568', minHeight: '30px' }}>
-            Current choice: <strong>{questions[0].options[sliderIndex]}</strong>
-          </div>
-          <button onClick={handleSliderNext} style={{ marginTop: '10px', padding: '10px 30px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-            Next Question
-          </button>
-        </div>
-      ) : currentQuestion === 1 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignSelf: 'stretch', gap: '10px', textAlign: 'left', maxWidth: '300px', margin: '0 auto' }}>
-            {questions[1].options.map(option => {
-              const isChecked = selectedConcerns.includes(option);
-              const isDisabled = !isChecked && selectedConcerns.length >= 2;
-              return (
-                <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', color: isDisabled ? '#cbd5e0' : '#1a202c', cursor: isDisabled ? 'not-allowed' : 'pointer' }}>
-                  <input type="checkbox" checked={isChecked} disabled={isDisabled} onChange={() => handleConcernCheckboxChange(option)} style={{ width: '18px', height: '18px', cursor: isDisabled ? 'not-allowed' : 'pointer' }} />
-                  {option}
-                </label>
-              );
-            })}
-          </div>
-          <button onClick={handleConcernNext} style={{ marginTop: '15px', padding: '10px 30px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
-            Next Question
+      {/* CONDITIONAL RENDERING: STARTER PAGE VS QUESTIONS */}
+      {!gameStarted ? (
+        /* --- STARTER PAGE INTERFACE --- */
+        <div style={{ padding: '10px 0' }}>
+          <h1 style={{ fontSize: '2.5rem', color: '#1a202c', margin: '0 0 10px 0', fontWeight: '800', letterSpacing: '-0.5px' }}>
+            Skindex
+          </h1>
+          <p style={{ fontSize: '1.05rem', color: '#4a5568', margin: '0 auto 35px auto', maxWidth: '340px', lineHeight: '1.5' }}>
+            Find a quick custom skincare routine for you or a gift
+          </p>
+          <button 
+            onClick={handleStartGame} 
+            style={{ padding: '14px 40px', fontSize: '1.1rem', fontWeight: 'bold', background: '#3182ce', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(49, 130, 206, 0.3)', transition: 'transform 0.1s ease' }}
+            onMouseDown={(e) => e.target.style.transform = 'scale(0.97)'}
+            onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+          >
+            Start Game 🚀
           </button>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {questions[currentQuestion].options.map(option => (
-            <button key={option} onClick={() => handleBudgetAnswer(option)} style={{ padding: '12px', fontSize: '1rem', border: '1px solid #cbd5e0', borderRadius: '6px', background: 'white', color: '#1a202c', cursor: 'pointer' }}>
-              {option}
-            </button>
-          ))}
+        /* --- GAMEPLAY QUESTIONS ROUTE --- */
+        <div>
+          <span style={{ color: '#aaa', fontSize: '0.9rem' }}>Question {currentQuestion + 1} of {questions.length}</span>
+          <h2 style={{ margin: '10px 0 30px 0', color: '#1a202c' }}>{questions[currentQuestion].text}</h2>
+
+          {/* QUESTION 1: Slider Screen */}
+          {currentQuestion === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+              <input 
+                type="range" 
+                min="0" 
+                max="2" 
+                step="1" 
+                value={sliderIndex} 
+                onChange={(e) => setSliderIndex(parseInt(e.target.value))} 
+                style={{ width: '80%', maxWidth: '300px', cursor: 'pointer' }}
+              />
+              <div style={{ fontSize: '1.2rem', color: '#4a5568', minHeight: '30px' }}>
+                Current choice: <strong>{questions[0].options[sliderIndex]}</strong>
+              </div>
+              <button onClick={handleSliderNext} style={{ marginTop: '10px', padding: '10px 30px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                Next Question
+              </button>
+            </div>
+          ) : currentQuestion === 1 ? (
+            /* QUESTION 2: Checkboxes */
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignSelf: 'stretch', gap: '10px', textAlign: 'left', maxWidth: '300px', margin: '0 auto' }}>
+                {questions[1].options.map(option => {
+                  const isChecked = selectedConcerns.includes(option);
+                  const isDisabled = !isChecked && selectedConcerns.length >= 2;
+                  return (
+                    <label key={option} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.1rem', color: isDisabled ? '#cbd5e0' : '#1a202c', cursor: isDisabled ? 'not-allowed' : 'pointer' }}>
+                      <input type="checkbox" checked={isChecked} disabled={isDisabled} onChange={() => handleConcernCheckboxChange(option)} style={{ width: '18px', height: '18px', cursor: isDisabled ? 'not-allowed' : 'pointer' }} />
+                      {option}
+                    </label>
+                  );
+                })}
+              </div>
+              <button onClick={handleConcernNext} style={{ marginTop: '15px', padding: '10px 30px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
+                Next Question
+              </button>
+            </div>
+          ) : (
+            /* QUESTION 3: Budget Buttons */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {questions[currentQuestion].options.map(option => (
+                <button key={option} onClick={() => handleBudgetAnswer(option)} style={{ padding: '12px', fontSize: '1rem', border: '1px solid #cbd5e0', borderRadius: '6px', background: 'white', color: '#1a202c', cursor: 'pointer' }}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
